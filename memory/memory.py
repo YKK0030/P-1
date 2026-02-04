@@ -22,7 +22,6 @@ def save_message(user_id, role, text):
     except Exception as e:
         logger.error(f"Supabase save failed: {e}")
 
-
 def get_history(user_id, limit=1):
     try:
         logger.debug(f"Fetching history for {user_id}")

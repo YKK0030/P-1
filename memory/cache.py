@@ -26,7 +26,6 @@ def cache_history(user_id, text):
     except Exception as e:
         logger.error(f"Redis cache save failed: {e}")
 
-
 def get_cache(user_id):
     if not r:
         return ""

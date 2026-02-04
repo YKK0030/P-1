@@ -3,13 +3,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-
 class Config:
 
     TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
     SUPABASE_URL = os.getenv("SUPABASE_URL")
     SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+    SERPER_API_KEY = os.getenv("SERPER_API_KEY")
     REDIS_URL = os.getenv("REDIS_URL")
     MODEL = os.getenv("MODEL_NAME")
 
