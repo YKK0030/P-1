@@ -1,14 +1,13 @@
 from telegram.ext import ApplicationBuilder, MessageHandler, filters
-from config import Config
-from logger import get_logger
+from config.config import Config
+from config.logger import get_logger
 
-from llm import ask_llm
-from memory import save_message, get_history
-from cache import cache_history, get_cache
+from llm.llm import ask_llm
+from memory.memory import save_message, get_history
+from memory.cache import cache_history, get_cache
 import asyncio
 
 logger = get_logger()
-
 
 async def reply(update, context):
     user_id = str(update.message.chat_id)
@@ -36,7 +35,6 @@ async def reply(update, context):
 
     except Exception as e:
         logger.error(f"Reply failed: {e}")
-
 
 logger.info("Nova started 🚀")
 

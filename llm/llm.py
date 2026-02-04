@@ -1,17 +1,14 @@
 from google import genai
 from google.genai.errors import ClientError
-from config import Config
-from config import Config
+from config.config import Config
 from dotenv import load_dotenv
 import os
-from logger import get_logger
-
+from config.logger import get_logger
 
 load_dotenv()
 logger = get_logger()
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-
 
 def ask_llm(user_text, history=""):
 

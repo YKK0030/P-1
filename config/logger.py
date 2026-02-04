@@ -3,7 +3,6 @@ from colorama import Fore, Style, init
 
 init(autoreset=True)
 
-
 class ColorFormatter(logging.Formatter):
     COLORS = {
         logging.INFO: Fore.CYAN,

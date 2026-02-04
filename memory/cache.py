@@ -1,9 +1,8 @@
 import redis
-from config import Config
-from logger import get_logger
+from config.config import Config
+from config.logger import get_logger
 
 logger = get_logger()
-
 
 # ===== INIT REDIS =====
 try:
