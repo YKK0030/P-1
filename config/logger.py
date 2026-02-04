@@ -20,7 +20,6 @@ class ColorFormatter(logging.Formatter):
 def get_logger():
     logger = logging.getLogger("Nova")
 
-    # 🔥 THIS LINE FIXES DUPLICATES
     if logger.handlers:
         return logger
 

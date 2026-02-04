@@ -36,7 +36,7 @@ async def reply(update, context):
     except Exception as e:
         logger.error(f"Reply failed: {e}")
 
-logger.info("Nova started 🚀")
+logger.info("Nova started")
 
 app = ApplicationBuilder().token(Config.TELEGRAM_TOKEN).build()
 app.add_handler(MessageHandler(filters.TEXT, reply))

@@ -5,17 +5,13 @@ load_dotenv()
 
 
 class Config:
-    # ===== KEYS =====
+
     TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-
     SUPABASE_URL = os.getenv("SUPABASE_URL")
     SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-
     REDIS_URL = os.getenv("REDIS_URL")
-
-    # ===== LLM =====
-    MODEL = "gemini-2.5-flash"
+    MODEL = os.getenv("MODEL_NAME")
 
     SYSTEM_PROMPT = """
 You are Nova, a personal AI assistant and technical buddy.

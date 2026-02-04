@@ -3,18 +3,14 @@ from config.config import Config
 from config.logger import get_logger
 
 logger = get_logger()
-
-# ===== INIT REDIS =====
 try:
     r = redis.from_url(Config.REDIS_URL)
     logger.info("Redis cache connected")
 
 except Exception as e:
     logger.error(f"Redis init failed: {e}")
-    r = None  # graceful fallback
+    r = None
 
-
-# ===== SAVE CACHE =====
 def cache_history(user_id, text):
     if not r:
         return
@@ -31,7 +27,6 @@ def cache_history(user_id, text):
         logger.error(f"Redis cache save failed: {e}")
 
 
-# ===== GET CACHE =====
 def get_cache(user_id):
     if not r:
         return ""

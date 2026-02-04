@@ -34,8 +34,8 @@ Assistant:
 
     except ClientError as e:
         logger.error(f"Gemini quota hit: {e}")
-        return "⚠️ Nova is cooling down (API limit hit). Try again in a few seconds."
+        return "Nova is cooling down (API limit hit). Try again in a few seconds."
 
     except Exception as e:
         logger.error(f"Gemini failed: {e}")
-        return "⚠️ Something went wrong. Try again."
+        return "Something went wrong. Try again."
