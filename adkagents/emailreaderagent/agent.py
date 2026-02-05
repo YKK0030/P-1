@@ -7,8 +7,14 @@ import datetime
 from email.header import decode_header
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+from dotenv import load_dotenv
+import os
 
-EMAIL = "yadnitkk@gmail.com"
+load_dotenv()
+
+user_email = os.getenv("USER_EMAIL")
+
+EMAIL = user_email
 SCOPES = ["https://mail.google.com/"]
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
