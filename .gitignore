@@ -2,5 +2,7 @@
 .env
 __pycache__/
 *.pyc
-.json
-.pickle
+
+# secrets
+credentials.json
+token.pickle
