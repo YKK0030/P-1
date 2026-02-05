@@ -44,106 +44,52 @@
 # app.run_polling()
 
 
-from google import genai
-from google.genai.errors import ClientError
-from dotenv import load_dotenv
-import os
-
-from config.config import Config
-from config.logger import get_logger
-
-from agents.web_agent import create_web_agent
-from tasks.web_task import create_web_task
-
-from crewai import Crew
-
-import warnings
-warnings.filterwarnings(
-    "ignore",
-    message="pkg_resources is deprecated as an API"
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    MessageHandler,
+    filters,
+    ContextTypes
 )
+from telegram import Update
 
-warnings.filterwarnings("ignore", category=UserWarning)
+from adk_runner import run_sync  # Import the function we built earlier
 
-load_dotenv()
-logger = get_logger()
+BOT_TOKEN = os.getenv("TELEGRAM_TOKEN")
 
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "👋 Hello! I’m your assistant — say hi or ask for today's emails."
+    )
 
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text.lower()
 
-def ask_gemini(user_text: str, history: str = "") -> str:
-    prompt = f"""
-{Config.SYSTEM_PROMPT}
+    if "hi" in text or "hello" in text or "hey" in text:
+        # Simple conversational greeting
+        await update.message.reply_text("Hey there! How can I help you today?")
+        return
 
-Conversation history:
-{history}
+    # Trigger for email summary
+    if "mail" in text or "email" in text:
+        await update.message.reply_text("⏳ Let me check your emails...")
 
-User: {user_text}
-Assistant:
-"""
-
-    try:
-        logger.info("Calling Gemini...")
-        response = client.models.generate_content(
-            model=Config.MODEL,
-            contents=prompt
-        )
-        return response.text
-
-    except ClientError as e:
-        logger.error(f"Gemini quota hit: {e}")
-        return "Nova is cooling down (API limit hit). Try again in a few seconds."
-
-    except Exception as e:
-        logger.error(f"Gemini failed: {e}")
-        return "Something went wrong. Try again."
-
-# -----------------------------------
-# CrewAI Execution
-# -----------------------------------
-def ask_crewai(user_text: str, history: str = "") -> str:
-    try:
-        logger.info("Calling CrewAI agent...")
-
-        agent = create_web_agent()
-        task = create_web_task(agent, user_text, history)
-
-        crew = Crew(
-            agents=[agent],
-            tasks=[task],
-            verbose=False
+        # Run your ADK agent
+        response = run_sync(
+            user_id=str(update.message.chat_id),
+            query_text="fetch and summarize today’s emails"
         )
 
-        result = crew.kickoff()
-        return str(result)
+        await update.message.reply_text(response)
+        return
 
-    except Exception as e:
-        logger.error(f"CrewAI failed: {e}")
-        logger.info("Falling back to Gemini")
-        return ask_gemini(user_text, history)
-
-# -----------------------------------
-# Router (Single Responsibility)
-# -----------------------------------
-def needs_web_search(text: str) -> bool:
-    keywords = [
-        "latest", "today", "news", "current",
-        "price", "update", "release",
-        "who is", "what is", "search", "find"
-    ]
-    return any(k in text.lower() for k in keywords)
-
-# -----------------------------------
-# Public API (Telegram calls this)
-# -----------------------------------
-def ask_llm(user_text: str, history: str = "") -> str:
-    if needs_web_search(user_text):
-        return ask_crewai(user_text, history)
-
-    return ask_gemini(user_text, history)
-
+    # Fallback - echo or generic reply
+    await update.message.reply_text("Sorry, I didn’t get that — try asking for today’s mail!")
 
 if __name__ == "__main__":
-    print("Starting test...")
-    response = ask_llm("latest news about OpenAI", "")
-    print(response)
+    app = ApplicationBuilder().token(BOT_TOKEN).build()
+
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+
+    app.run_polling()

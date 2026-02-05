@@ -12,6 +12,7 @@ class Config:
     SERPER_API_KEY = os.getenv("SERPER_API_KEY")
     REDIS_URL = os.getenv("REDIS_URL")
     MODEL = os.getenv("MODEL_NAME")
+    USER_EMAIL = os.getenv("USER_EMAIL")
 
     SYSTEM_PROMPT = """
 You are Nova, a personal AI assistant and technical buddy.
