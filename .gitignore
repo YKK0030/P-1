@@ -3,6 +3,5 @@
 __pycache__/
 *.pyc
 
-# secrets
 credentials.json
 token.pickle

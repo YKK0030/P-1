@@ -52,8 +52,12 @@ from telegram.ext import (
     ContextTypes
 )
 from telegram import Update
+import os
+from adk_runner import run_adk_agent  # Import the function we built earlier
+from config.logger import get_logger
+import json
 
-from adk_runner import run_sync  # Import the function we built earlier
+logger = get_logger()
 
 BOT_TOKEN = os.getenv("TELEGRAM_TOKEN")
 
@@ -62,31 +66,69 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "👋 Hello! I’m your assistant — say hi or ask for today's emails."
     )
 
+# async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+#     user_id = str(update.message.chat_id)
+#     text = update.message.text.lower()
+
+#     logger.info(f"Received message from {user_id}: {text}")
+
+#     if "hi" in text or "hello" in text or "hey" in text:
+#         # Simple conversational greeting
+#         await update.message.reply_text("Hey there! How can I help you today?")
+#         return
+
+#     # Trigger for email summary
+#     if "mail" in text or "email" in text:
+#         await update.message.reply_text("⏳ Let me check your emails...")
+
+#         # Run your ADK agent
+#         logger.info("Calling ADK agent...")
+#         response = await run_adk_agent(
+#             user_id=str(update.message.chat_id),
+#             query_text="fetch and summarize today’s emails"
+#         )
+#         logger.info("✅ ADK agent responded with response id")
+#         with open("response.json", "w", encoding="utf-8") as f:
+#             json.dump({"response": response}, f, indent=2)
+
+#         await update.message.reply_text(response)
+#         return
+
+#     # Fallback - echo or generic reply
+#     await update.message.reply_text("Sorry, I didn’t get that — try asking for today’s mail!")
+
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text.lower()
+    user_id = str(update.message.chat_id)
+    text = update.message.text
 
-    if "hi" in text or "hello" in text or "hey" in text:
-        # Simple conversational greeting
-        await update.message.reply_text("Hey there! How can I help you today?")
-        return
+    logger.info(f"Received message from {user_id}: {text}")
 
-    # Trigger for email summary
-    if "mail" in text or "email" in text:
-        await update.message.reply_text("⏳ Let me check your emails...")
+    # Optional typing indicator
+    await update.message.reply_text("Thinking...")
 
-        # Run your ADK agent
-        response = run_sync(
-            user_id=str(update.message.chat_id),
-            query_text="fetch and summarize today’s emails"
-        )
+    logger.info("Forwarding message to ADK agent")
 
-        await update.message.reply_text(response)
-        return
+    response = await run_adk_agent(
+        user_id=user_id,
+        query_text=text
+    )
 
-    # Fallback - echo or generic reply
-    await update.message.reply_text("Sorry, I didn’t get that — try asking for today’s mail!")
+    logger.info("ADK agent responded")
+
+    # Optional: persist for debugging
+    with open("response.json", "w", encoding="utf-8") as f:
+        json.dump({"response": response}, f, indent=2)
+
+    # Send formatted response
+    await update.message.reply_text(
+        f"<b>Nova</b>\n\n{response}",
+        parse_mode="HTML"
+    )
+
 
 if __name__ == "__main__":
+    logger.info("Nova started")
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
