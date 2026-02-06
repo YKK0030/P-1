@@ -4,7 +4,7 @@ from google.adk.sessions import InMemorySessionService
 from google.adk.runners import Runner
 from google.genai import types
 
-from adkagents.agent import root_agent  # your ADK email agent
+from adkagents.root_agent import nova_agent  # your ADK email agent
 
 APP_NAME = "agents"
 
@@ -17,7 +17,7 @@ async def run_adk_agent(user_id: str, query_text: str) -> str:
     )
 
     runner = Runner(
-        agent=root_agent,
+        agent=nova_agent,
         app_name=APP_NAME,
         session_service=session_service
     )

@@ -1,49 +1,3 @@
-# from telegram.ext import ApplicationBuilder, MessageHandler, filters
-# from config.config import Config
-# from config.logger import get_logger
-
-# from llm.llm import ask_llm
-# from memory.memory import save_message, get_history
-# from memory.cache import cache_history, get_cache
-# import asyncio
-
-# logger = get_logger()
-
-# async def reply(update, context):
-#     user_id = str(update.message.chat_id)
-#     text = update.message.text
-
-#     logger.info(f"Message from {user_id}")
-
-#     await update.message.reply_text("Thinking...")
-
-#     await asyncio.sleep(1)
-
-#     history = get_cache(user_id) or get_history(user_id)
-
-#     answer = ask_llm(text, history)
-
-#     save_message(user_id, "user", text)
-#     save_message(user_id, "assistant", answer)
-
-#     cache_history(user_id, f"user: {text}")
-#     cache_history(user_id, f"assistant: {answer}")
-#     logger.info(f"Sending reply to {user_id}")
-#     try:
-#         await update.message.reply_text(answer)
-#         logger.info(f"Reply successfully sent to {user_id}")
-
-#     except Exception as e:
-#         logger.error(f"Reply failed: {e}")
-
-# logger.info("Nova started")
-
-# app = ApplicationBuilder().token(Config.TELEGRAM_TOKEN).build()
-# app.add_handler(MessageHandler(filters.TEXT, reply))
-
-# app.run_polling()
-
-
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
@@ -56,6 +10,9 @@ import os
 from adk_runner import run_adk_agent  # Import the function we built earlier
 from config.logger import get_logger
 import json
+import html
+def safe_html(text: str) -> str:
+    return html.escape(text)
 
 logger = get_logger()
 
@@ -67,64 +24,64 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 # async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
 #     user_id = str(update.message.chat_id)
-#     text = update.message.text.lower()
+#     text = update.message.text
 
 #     logger.info(f"Received message from {user_id}: {text}")
 
-#     if "hi" in text or "hello" in text or "hey" in text:
-#         # Simple conversational greeting
-#         await update.message.reply_text("Hey there! How can I help you today?")
-#         return
+#     # Optional typing indicator
+#     await update.message.reply_text("Thinking...")
 
-#     # Trigger for email summary
-#     if "mail" in text or "email" in text:
-#         await update.message.reply_text("⏳ Let me check your emails...")
+#     logger.info("Forwarding message to ADK agent")
 
-#         # Run your ADK agent
-#         logger.info("Calling ADK agent...")
-#         response = await run_adk_agent(
-#             user_id=str(update.message.chat_id),
-#             query_text="fetch and summarize today’s emails"
-#         )
-#         logger.info("✅ ADK agent responded with response id")
-#         with open("response.json", "w", encoding="utf-8") as f:
-#             json.dump({"response": response}, f, indent=2)
+#     response = await run_adk_agent(
+#         user_id=user_id,
+#         query_text=text
+#     )
 
-#         await update.message.reply_text(response)
-#         return
+#     logger.info("ADK agent responded")
 
-#     # Fallback - echo or generic reply
-#     await update.message.reply_text("Sorry, I didn’t get that — try asking for today’s mail!")
+#     # Optional: persist for debugging
+#     with open("response.json", "w", encoding="utf-8") as f:
+#         json.dump({"response": response}, f, indent=2)
+
+#     # Send formatted response
+#     await update.message.reply_text(
+#         f"<b>Nova</b>\n\n{response}",
+#         parse_mode="HTML"
+#     )
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.message.chat_id)
     text = update.message.text
 
-    logger.info(f"Received message from {user_id}: {text}")
+    logger.info(f"📩 Received message from {user_id}: {text}")
 
-    # Optional typing indicator
-    await update.message.reply_text("Thinking...")
-
-    logger.info("Forwarding message to ADK agent")
+    await update.message.reply_text("🤖 Thinking...")
 
     response = await run_adk_agent(
         user_id=user_id,
         query_text=text
     )
 
-    logger.info("ADK agent responded")
-
-    # Optional: persist for debugging
-    with open("response.json", "w", encoding="utf-8") as f:
-        json.dump({"response": response}, f, indent=2)
-
-    # Send formatted response
-    await update.message.reply_text(
-        f"<b>Nova</b>\n\n{response}",
-        parse_mode="HTML"
+    await update.message.reply_photo(
+    photo=response["url"],
+    caption=f"Nova \n\nGenerated image for:\n{response['prompt']}"
     )
+
+    # if isinstance(response, dict) and response.get("type") == "image":
+        # await update.message.reply_photo(
+        #     photo=response["url"],
+        #     caption=(
+        #         "<b>Nova 🤖</b>\n\n"
+        #         f"🖼️ <i>Generated image for:</i>\n"
+        #         f"<code>{response['prompt']}</code>"
+        #     ),
+        #     parse_mode="HTML"
+        # )
+        # return
+
+    await update.message.reply_text(response)
 
 
 if __name__ == "__main__":
