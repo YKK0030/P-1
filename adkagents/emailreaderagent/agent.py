@@ -12,6 +12,7 @@ import os
 
 load_dotenv()
 
+#added comment
 user_email = os.getenv("USER_EMAIL")
 
 EMAIL = user_email
