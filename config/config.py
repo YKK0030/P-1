@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+#updted mail and redis url
 class Config:
 
     TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
