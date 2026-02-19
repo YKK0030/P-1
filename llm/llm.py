@@ -1,17 +1,26 @@
 from google import genai
-from google.genai.errors import ClientError
-from config.config import Config
+from google.genai.errors import ClientError, APIError
+from config.config import Config, APIKeyRotator
+from config.logger import get_logger
 from dotenv import load_dotenv
 import os
-from config.logger import get_logger
 
 load_dotenv()
 logger = get_logger()
 
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+# Initialize API key rotator
+gemini_rotator = APIKeyRotator("gemini")
 
-def ask_llm(user_text, history=""):
+def get_gemini_client():
+    """Get Gemini client with current API key."""
+    current_key = gemini_rotator.get_current_key()
+    return genai.Client(api_key=current_key)
 
+
+def ask_llm(user_text: str, history: str = "") -> str:
+    """
+    Call Gemini with automatic API key fallback on token exhaustion.
+    """
     prompt = f"""
 {Config.SYSTEM_PROMPT}
 
@@ -22,20 +31,41 @@ User: {user_text}
 Assistant:
 """
 
-    try:
-        logger.info("Calling Gemini...")
+    max_retries = len(gemini_rotator.keys)
+    retry_count = 0
 
-        response = client.models.generate_content(
-            model=Config.MODEL,
-            contents=prompt
-        )
+    while retry_count < max_retries:
+        try:
+            client = get_gemini_client()
+            logger.info(f"🤖 Calling Gemini (key #{gemini_rotator.current_index + 1}/{gemini_rotator.get_status()['total_keys']})...")
 
-        return response.text
+            response = client.models.generate_content(
+                model=Config.MODEL,
+                contents=prompt
+            )
 
-    except ClientError as e:
-        logger.error(f"Gemini quota hit: {e}")
-        return "Nova is cooling down (API limit hit). Try again in a few seconds."
+            return response.text
 
-    except Exception as e:
-        logger.error(f"Gemini failed: {e}")
-        return "Something went wrong. Try again."
+        except (ClientError, APIError) as e:
+            error_msg = str(e).lower()
+            
+            # Check for quota/token exhaustion errors
+            if any(keyword in error_msg for keyword in ["quota", "exhausted", "rate limit", "429", "403"]):
+                logger.warning(f"⚠️ Token quota hit on key #{gemini_rotator.current_index + 1}: {e}")
+                
+                if gemini_rotator.rotate_to_next_key():
+                    retry_count += 1
+                    logger.info(f"🔄 Retrying with next API key... (attempt {retry_count}/{max_retries})")
+                    continue
+                else:
+                    return "❌ All Gemini API keys exhausted. Please add more API keys or wait for quota reset."
+            
+            # For other errors, fail immediately
+            logger.error(f"❌ Gemini error (non-quota): {e}")
+            return "❌ Something went wrong with Gemini. Try again."
+
+        except Exception as e:
+            logger.error(f"❌ Unexpected error: {e}")
+            return "❌ Unexpected error occurred. Try again."
+
+    return "❌ API key rotation failed. No keys available."
