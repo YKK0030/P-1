@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+#updted mail and redis url
 class Config:
 
     TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
@@ -12,6 +13,7 @@ class Config:
     SERPER_API_KEY = os.getenv("SERPER_API_KEY")
     REDIS_URL = os.getenv("REDIS_URL")
     MODEL = os.getenv("MODEL_NAME")
+    USER_MAIL = os.get("USER_MAIL")
 
     SYSTEM_PROMPT = """
 You are Nova, a personal AI assistant and technical buddy.
